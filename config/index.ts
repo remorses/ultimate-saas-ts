@@ -15,8 +15,8 @@ const env = {
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-  GITHUB_ID: process.env.GITHUB_ID,
-  GITHUB_SECRET: process.env.GITHUB_SECRET,
+  GOOGLE_ID: process.env.GOOGLE_ID,
+  GOOGLE_SECRET: process.env.GOOGLE_SECRET,
 };
 
 const envSchema = yup.object({
@@ -32,14 +32,14 @@ const envSchema = yup.object({
     is: () => isSSR(),
     then: yup.string().required(),
   }),
-  SMTP_SERVER: yup.string().when({
-    is: () => isSSR(),
-    then: yup.string().required(),
-  }),
-  SMTP_FROM: yup.string().when({
-    is: () => isSSR(),
-    then: yup.string().required(),
-  }),
+  // SMTP_SERVER: yup.string().when({
+  //   is: () => isSSR(),
+  //   then: yup.string().required(),
+  // }),
+  // SMTP_FROM: yup.string().when({
+  //   is: () => isSSR(),
+  //   then: yup.string().required(),
+  // }),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: yup.string().required(),
   STRIPE_SECRET_KEY: yup.string().when({
     is: () => isSSR(),
@@ -49,11 +49,11 @@ const envSchema = yup.object({
     is: () => isSSR(),
     then: yup.string().required(),
   }),
-  GITHUB_ID: yup.string().when({
+  GOOGLE_ID: yup.string().when({
     is: () => isSSR(),
     then: yup.string().required(),
   }),
-  GITHUB_SECRET: yup.string().when({
+  GOOGLE_SECRET: yup.string().when({
     is: () => isSSR(),
     then: yup.string().required(),
   }),
