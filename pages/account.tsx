@@ -7,6 +7,7 @@ import React from 'react';
 
 import { Navbar } from '@app/components';
 import { prisma } from '@app/utils/ssr';
+import { createPortal } from './api/stripe/create-portal';
 
 type Props = {
   subscription: Subscription | null;
@@ -14,14 +15,7 @@ type Props = {
 
 const Page: NextPage<Props> = ({ subscription }) => {
   const handleCreatePortal = async () => {
-    const res = await fetch('/api/stripe/create-portal', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-    });
-
-    const data = await res.json();
+    const data = await createPortal({})
 
     const url = data.url;
 
@@ -72,7 +66,7 @@ const Page: NextPage<Props> = ({ subscription }) => {
                   </p>
                 </div>
                 <div className="mt-5 sm:mt-0 sm:ml-6 sm:flex-shrink-0 sm:flex sm:items-center">
-                  {!!subscription ? (
+                  {subscription ? (
                     <button
                       onClick={handleCreatePortal}
                       type="button"

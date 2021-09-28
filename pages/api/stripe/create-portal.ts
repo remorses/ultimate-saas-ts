@@ -1,20 +1,28 @@
-import config from '@app/config';
-import { createAuthApiHandler, stripe } from '@app/utils/ssr';
-import { getCustomerId } from '@app/utils/ssr/stripe';
+import conf from '@app/config'
+import { stripe } from '@app/utils/ssr'
+import { getCustomerId } from '@app/utils/ssr/stripe'
+import { getSession } from 'next-auth/react'
+import { getContext } from 'next-rpc/context'
 
-const handler = createAuthApiHandler();
+export const config = { rpc: true } // enable rpc on this API route
 
-handler.post(async (req, res) => {
-  const userId = req.session?.userId!;
+export const createPortal = async ({}) => {
+    const { req, res } = getContext()
 
-  const customerId = await getCustomerId(userId);
+    const session = await getSession({ req })
+    if (!session || !session.user?.id) {
+        throw new Error('Forbidden')
+    }
+    const userId = session.user.id
+    const customerId = await getCustomerId(userId)
 
-  const { url } = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: `${config.NEXTAUTH_URL}/account`,
-  });
+    const { url } = await stripe.billingPortal.sessions.create({
+        customer: customerId,
 
-  return res.status(200).json({ url });
-});
+        return_url: `${conf.NEXTAUTH_URL}/account`,
+    })
 
-export default handler;
+    return { url }
+}
+
+

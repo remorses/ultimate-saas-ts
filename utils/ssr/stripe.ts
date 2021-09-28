@@ -8,6 +8,9 @@ const stripe = new Stripe(config.STRIPE_SECRET_KEY!, {
 });
 
 export const getCustomerId = async (userId: string) => {
+  if (!userId) {
+    throw new Error('no userId passed to getCustomerId')
+  }
   let customer = await prisma.customer.findFirst({
     where: {
       userId: userId,
@@ -19,6 +22,7 @@ export const getCustomerId = async (userId: string) => {
   }
 
   const newCustomer = await stripe.customers.create({
+
     metadata: {
       userId: userId,
     },

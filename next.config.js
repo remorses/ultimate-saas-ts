@@ -1,4 +1,8 @@
+const withRpc = require('next-rpc')({
+    experimentalContext: true,
+})
 /** @type {import('next').NextConfig} */
-module.exports = {
-  reactStrictMode: true,
+const config = {
+    reactStrictMode: true,
 }
+module.exports = withRpc(config)

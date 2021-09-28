@@ -3,7 +3,8 @@ import Stripe from 'stripe';
 
 import appConfig from '@app/config';
 import { timestampToDate } from '@app/utils';
-import { createApiHandler, prisma, stripe } from '@app/utils/ssr';
+import {  prisma, stripe } from '@app/utils/ssr';
+import { NextApiHandler, NextApiRequest } from 'next';
 
 // Stripe requires the raw body to construct the event.
 export const config = {
@@ -30,9 +31,12 @@ const relevantEvents = new Set([
   'customer.subscription.deleted',
 ]);
 
-const handler = createApiHandler();
 
-handler.post(async (req, res) => {
+const handler: NextApiHandler = async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send({ message: 'Only POST requests allowed' })
+
+  }
   const buf = await buffer(req);
   const sig = req.headers['stripe-signature'];
   let event;
@@ -211,6 +215,8 @@ handler.post(async (req, res) => {
   }
 
   res.json({ received: true });
-});
+}
 
-export default handler;
+
+
+export default handler

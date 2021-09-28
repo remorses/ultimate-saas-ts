@@ -1,42 +1,54 @@
-import config from '@app/config';
-import { createAuthApiHandler, stripe } from '@app/utils/ssr';
-import { getCustomerId } from '@app/utils/ssr/stripe';
+import conf from '@app/config'
+import { stripe } from '@app/utils/ssr'
+import { getCustomerId } from '@app/utils/ssr/stripe'
+import { NextApiHandler } from 'next'
+import { getSession } from 'next-auth/react'
+import { getContext } from 'next-rpc/context'
 
-const handler = createAuthApiHandler();
+export const config = { rpc: true } // enable rpc on this API route
 
-handler.post(async (req, res) => {
-  const { price, quantity = 1, metadata = {} } = req.body;
+export const createCheckoutSession = async ({
+    priceId,
+    quantity = 1,
+    metadata = {},
+}) => {
+    if (!priceId) {
+        throw new Error('Missing parameter price')
+    }
 
-  if (!price) {
-    throw new Error('Missing parameter price');
-  }
+    const { req, res } = getContext()
+    
+    const session = await getSession({ req })
+    if (!session || !session.user?.id) {
+        throw new Error('Forbidden')
+    }
+    const userId = session.user.id
 
-  const userId = req.session?.userId!;
+    const customerId = await getCustomerId(userId)
 
-  const customerId = await getCustomerId(userId);
+    const checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        billing_address_collection: 'required',
+        customer: customerId,
+        client_reference_id: userId,
+        line_items: [
+            {
+                price: priceId,
+                quantity: 1,
+            },
+        ],
+        mode: 'subscription',
 
-  const checkoutSession = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    billing_address_collection: 'required',
-    customer: customerId,
-    client_reference_id: userId,
-    line_items: [
-      {
-        price: price,
-        quantity: 1,
-      },
-    ],
-    mode: 'subscription',
-    allow_promotion_codes: true,
-    subscription_data: {
-      trial_from_plan: true,
-      metadata: {},
-    },
-    success_url: `${config.NEXTAUTH_URL}/account`,
-    cancel_url: `${config.NEXTAUTH_URL}/`,
-  });
+        allow_promotion_codes: true,
+        subscription_data: {
+            trial_from_plan: true,
+            // TODO trial period goes here
+            // trial_period_days
+            metadata: {},
+        },
+        success_url: `${conf.NEXTAUTH_URL}/account`,
+        cancel_url: `${conf.NEXTAUTH_URL}/`,
+    })
 
-  return res.status(200).json({ sessionId: checkoutSession.id });
-});
-
-export default handler;
+    return { sessionId: checkoutSession.id }
+}

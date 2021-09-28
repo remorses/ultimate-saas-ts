@@ -1,20 +1,25 @@
-import { createAuthApiHandler, prisma, stripe } from '@app/utils/ssr';
+import { prisma, stripe } from '@app/utils/ssr'
+import { getSession } from 'next-auth/react'
+import { getContext } from 'next-rpc/context'
 
-const handler = createAuthApiHandler();
+export const config = { rpc: true } // enable rpc on this API route
 
-handler.get(async (req, res) => {
-  const userId = req.session?.userId!;
+export const getSubscription = async ({}) => {
+    const { req, res } = getContext()
+    const session = await getSession({ req })
+    if (!session || !session.user?.id) {
+        throw new Error('Forbidden')
+    }
+    const userId = session.user.id
 
-  const subscription = await prisma.subscription?.findFirst({
-    where: {
-      userId: userId,
-      status: {
-        in: ['active', 'trialing'],
-      },
-    },
-  });
+    const subscription = await prisma.subscription?.findFirst({
+        where: {
+            userId: userId,
+            status: {
+                in: ['active', 'trialing'],
+            },
+        },
+    })
 
-  return res.status(200).json({ subscription });
-});
-
-export default handler;
+    return { subscription }
+}
